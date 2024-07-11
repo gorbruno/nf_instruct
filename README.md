@@ -177,7 +177,7 @@ viralrecon позволяет собирать и оценивать геном�
 
 Суммарно, усреднённая команда nextflow выглядит следующим образом:
 
-```bash
+```terminal
 nextflow run nf-core/viralrecon \
     --input samplesheet.csv \
     --outdir <OUTDIR> \
