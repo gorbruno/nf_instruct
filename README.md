@@ -152,7 +152,9 @@ process {
 nextflow run <params> -profile <conda/docker/singularity/podman/institute>
 ```
 
-`institute` тут означает один из [файлов конфигурации](https://github.com/nf-core/configs/tree/master/conf) института. При выборе профиля docker для каждого этапа подружается и используется соответсвующий образ. Профиль conda создаёт в рабочей директории папку с загруженными окружениями. Для каждой рабочей директории окружения создаются заново, поэтому  важно в файле конфигурации указать путь до определённой папки для снижения нагрузки на память сервера, повышения скорости выполнения пайплайнов и контроля версий окружений. Для работы на сервере будет использоваться профиль conda.
+`institute` тут означает один из [файлов конфигурации](https://github.com/nf-core/configs/tree/master/conf) института. 
+При выборе профиля docker для каждого этапа подружается и используется соответсвующий образ. 
+Профиль conda создаёт в рабочей директории папку с загруженными окружениями. Для каждой рабочей директории окружения создаются заново, поэтому  важно в файле конфигурации указать путь до определённой папки для снижения нагрузки на память сервера, повышения скорости выполнения пайплайнов и контроля версий окружений. Для работы на сервере будет использоваться профиль conda.
 
 ## Использование пайплайнов
 
@@ -164,4 +166,26 @@ nextflow run <params> -profile <conda/docker/singularity/podman/institute>
 * nf-core/mag
 
 viralrecon позволяет собирать и оценивать геномные последовательности из сырых архивированных fastq.gz-файлов. Это буквально формат, в котором данные выгружаются с секвенатора.
-Пайплайн оптимизирован разработчиками под вирусы SARS-CoV-2 и MPOX: для уточнения используется параметр `--genome <accession.version>`. Эти аксешники можно найти в репозитории пайплайна. Однако, разработчиками также предусмотрена возможность использовать собственные вирусные последовательности. Для этого указывается путь до fasta и gff файлов референсной последовательности: `--fasta /path/to/fasta --gff /path/to/gff`. Другие обязательные параметры для запуска пайплайна: `--input`, `--outdir`, `--protocol <metagenomic/amplicon>`, `--platform <illumina/nanopore>`
+
+Пайплайн оптимизирован разработчиками под вирусы SARS-CoV-2 и MPOX: для уточнения используется параметр `--genome <accession.version>`. Эти аксешники можно найти в [репозитории пайплайна](https://github.com/nf-core/configs/blob/master/conf/pipeline/viralrecon/genomes.config).
+
+Однако, разработчиками также предусмотрена возможность использовать собственные вирусные последовательности. Для этого указывается путь до fasta и gff файлов референсной последовательности: `--fasta /path/to/fasta --gff /path/to/gff`. 
+
+Другие обязательные параметры для запуска пайплайна: `--input`, `--outdir`, `--protocol <metagenomic/amplicon>`, `--platform <illumina/nanopore>`.
+
+При выборе `--protocol amplicon` обязательными становятся параметры `--primer_set` и `--primer_set_version`, которые можно найти в [этом же](https://github.com/nf-core/configs/blob/master/conf/pipeline/viralrecon/genomes.config) репозитории. Также можно указать путь до bed файла с праймерами `--primer_set </path/to/bed>`
+
+Суммарно, усреднённая команда nextflow выглядит следующим образом:
+
+```bash
+nextflow run nf-core/viralrecon \
+    --input samplesheet.csv \
+    --outdir <OUTDIR> \
+    --platform illumina \
+    --protocol amplicon \
+    --genome 'MN908947.3' \
+    --primer_set artic \
+    --primer_set_version 3 \
+    --skip_assembly \
+    -profile <docker/singularity/podman/conda/institute>
+```
