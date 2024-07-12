@@ -179,7 +179,7 @@ viralrecon позволяет собирать и оценивать геном�
 
 Суммарно, усреднённая команда nextflow выглядит следующим образом:
 
-```terminal
+```console
 nextflow run nf-core/viralrecon \
     --input samplesheet.csv \
     --outdir <OUTDIR> \
@@ -227,7 +227,7 @@ wget -L https://raw.githubusercontent.com/nf-core/viralrecon/master/bin/fastq_di
 `mag`:
 
 Всегда нужна колонка _long reads_, даже если таких прочтений нет.
-```terminal
+```console
 sample,group,short_reads_1,short_reads_2,long_reads
 sample1,0,data/sample1_R1.fastq.gz,data/sample1_R2.fastq.gz,
 sample2,0,data/sample2_R1.fastq.gz,data/sample2_R2.fastq.gz,
@@ -236,7 +236,7 @@ sample3,1,data/sample3_R1.fastq.gz,data/sample3_R2.fastq.gz,
 
 Также, если контиги уже были как-то собраны, можно указать путь до этих  fasta.gz файлов:
 
-```terminal
+```console
 id,group,assembler,fasta
 sample1,0,MEGAHIT,MEGAHIT-sample1.contigs.fa.gz
 sample1,0,SPAdes,SPAdes-sample1.fasta.gz
@@ -281,7 +281,7 @@ max_memory: '6.GB'
 
 ### Сборка геномов на референс (полная команда)
 
-```terminal
+```console
 nextflow run nf-core/viralrecon \
     --input samplesheet.csv \
     --outdir <OUTDIR> \
@@ -303,7 +303,7 @@ nextflow run nf-core/viralrecon \
 
 ### Сборка геномов de novo
 
-```terminal
+```console
 nextflow run nf-core/mag \
     --input samplesheet.csv \
     --outdir <OUTDIR> \
