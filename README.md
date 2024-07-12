@@ -149,7 +149,7 @@ process {
 Для запуска каждого этапа пайплайна создаются различные окружения с необходимыми библиотеками. Как эти окружения будут создаваться указывает параметр `profile`:
 
 ```bash
-nextflow run <params> -profile <conda/docker/singularity/podman/institute>
+nextflow run <params> -profile <conda/docker/singularity/podman/institute[,test]>
 ```
 
 `institute` тут означает один из [файлов конфигурации](https://github.com/nf-core/configs/tree/master/conf) института. 
