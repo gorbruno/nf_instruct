@@ -1,36 +1,35 @@
-nextflow run nf-core/pipeline —input_sheet —outdir -profile conda -c custom.config -params-file params.yml
+# Гайд по парсингу таблицы и генерации файлов на вход пайплайна
 
-пайплайн может брать на вход такую команду
+## Универсальная команда
 
-где nf-core/pipeline — имя репозитория на гитхабе
-можно использовать локальный репозиторий или гитлаб при дополнительной настройке
+```bash
+nextflow run nf-core/pipeline --input_sheet —-outdir -profile conda -c custom.config -params-file params.yml
+```
 
+* nf-core/pipeline — имя репозитория на гитхабе
+>можно использовать локальный репозиторий или гитлаб при дополнительной настройке
 input_sheet — таблица со всеми файлами, которые будут обрабатываться
+* outdir — папка, куда будет сохраняться результат пайплайна 
+> на уровень выше этой папки всегда лежат папки с кэшем work и .nextflow, а также логи .nextflow.log
+*profile указывает, что надо использовать конду
+* c — файл конфигурации
+* params-file — файл параметров пайплайна
 
-outdir — папка, куда будет сохраняться результат пайплайна 
-на уровень выше этой папки всегда лежат папки с кэшем work и .nextflow, а также логи .nextflow.log
+__`Достаточно генерировать файл с конфигурацией и параметрами`__
 
-profile указывает, что надо использовать конду
-
-c — файл конфигурации
-
-params-file — файл параметров пайплайна
-
-то есть для удобного использования нам достаточно генерировать файл с конфигурацией и параметрами
-
-Это делается по общей БД (таблице)
+## Это делается по общей БД (таблице)
 
 Таблица делится на 3 логических части:
-files
-conditions
-config
+* files
+* conditions
+* config
 
 Во всех таблицах есть колонки для обозначения:
-состояний интерфеса (interface в названии)
-их связь с параметрами пайлайна (parameter; parameter_arg)
-зависимости параметров (если какой-то параметр не может быть запущен без другого)
+* состояний интерфеса (interface в названии)
+* их связь с параметрами пайлайна (parameter; parameter_arg)
+* зависимости параметров (если какой-то параметр не может быть запущен без другого)
 
-files
+### files
 
 здесь перечислены все доступные для вируса селекторы
 
@@ -39,7 +38,7 @@ files
 
 interface condition показывает в каком состоянии может находится элемент интерфейса — в этой таблице все **select
 
-conditions
+### conditions
 
 все доступные для вируса бинарные аргументы
 
@@ -49,13 +48,13 @@ conditions
 
 также заполнена колонка default_interface с дефолтным значением параметра в интерфейсе
 
-ВАЖНО
+__ВАЖНО__
 
-interface_parameter и parameter_arg часто противоположны!!
+interface_parameter и parameter_arg часто _противоположны_!!
 отсюда доступ к параметрам пайплайна из связи с параметрами интерфейса,
 а не параметры интерфейса напрямую
 
-config
+### config
 
 таблица с параметрами конфигурации
 по ней можно генерировать мокап файла конфигурации с помощью create_config
@@ -66,115 +65,124 @@ config
 
 поэтому тут есть level, step, config_arg колонки
 
-пример конфигурации
+### пример конфигурации
 
+#### 1. conda
+`этот кусок с conda указывает путь, куда сохранять и где искать окружения`
+```bash
 conda {
 	cacheDir = '/mnt/dbs_nextflow/nextflow_resources/nf-core/envs/viralrecon_env/'
 }
-
-этот кусок с conda указывает путь, куда сохранять и где искать окружения
+```
 
 в таблице у этого куска нет parameter, но есть 
 parameter_arg =  '/mnt/dbs_nextflow/nextflow_resources/nf-core/envs/viralrecon_env/'
 level = conda
 config_step пустой
-config_arg = cacheDir
+config_arg = cacheDir
+
+2. #### process
+`этот кусок указывает на процессы, здесь берётся FASTP`
+```bash
 process {
 	withName: 'FASTP' {
 		conda = 'bioconda::fastp=0.23.4'
 		ext.args = '--length_required 30 --length_limit 0 --cut_mean_quality 20 --trim_poly_x  --cut_front --cut_tail'
 	}
 }
-
-этот кусок указывает на процессы, здесь берётся FASTP
+```
 
 level = process
+
 config_step = FASTP — шаг пайплайна
+
 config_arg = conda
-	parameter = «»
+
+parameter = «»
+
 config_arg = ext.args
-	parameter = length_required
-		parameter_arg = 30
-	parameter = length_limit
-		parameter_arg = 0
 
-итд
+ parameter = length_required
 
-КАК ГЕНЕРИРУЕТСЯ ИНТЕРФЕЙС
+  parameter_arg = 30
 
-СЕЛЕКТОРЫ
+ parameter = length_limit
 
-прописываются вручную
-на вход все доступные для вируса селекторы из отфильтрованной по вирусу таблице
-можно для аргументов парсинга прописать соответствующий parameter_interace
+  parameter_arg = 0
 
-если вариант выбора 1, его можно дефолтным выводить
+_итд_
 
-КОЛИЧЕСТВЕННЫЕ
+## КАК ГЕНЕРИРУЕТСЯ ИНТЕРФЕЙС
 
-текстовое поле, можно прописать в цикле
-аргументы парсинга — parameter_interface
+### СЕЛЕКТОРЫ
 
-в таблице есть колонка default_interface, где прописаны дефолтные значения
+- прописываются вручную
+- на вход все доступные для вируса селекторы из отфильтрованной по вирусу таблице
+- можно для аргументов парсинга прописать соответствующий parameter_interace
 
-БИНАРНЫЕ
+> если вариант выбора 1, его можно дефолтным выводить
 
-чекбоксы, можно прописать в цикле
-аргументы парсинга — parameter_interface
-дефолтные значения из default_interface
+### КОЛИЧЕСТВЕННЫЕ
 
-«ЗАБАНЕННЫЕ»
+- текстовое поле, можно прописать в цикле
+- аргументы парсинга — parameter_interface
 
-не выводятся в интерфейс, аргументы парсинга всегда False
+> в таблице есть колонка default_interface, где прописаны дефолтные значения
 
+### БИНАРНЫЕ
 
-КАК ГЕНЕРИРУЕТСЯ ФАЙЛ С ПАРАМЕТРАМИ
+- чекбоксы, можно прописать в цикле
+- аргументы парсинга — parameter_interface
+- дефолтные значения из default_interface
 
-изначальная таблица — table
+### «ЗАБАНЕННЫЕ»
 
-Сортировка таблицы по ВИРУСУ — filtered_table
+- не выводятся в интерфейс, аргументы парсинга всегда False
 
-СЕЛЕКТОРЫ (Ref, Trim Primers, Remove Host Read, Nextclade)
+### КАК ГЕНЕРИРУЕТСЯ ФАЙЛ С ПАРАМЕТРАМИ
 
-table —> filtered_table —> index by type_interface (indexed_f_table)
+	изначальная таблица — table
+	cортировка таблицы по ВИРУСУ — filtered_table
 
-user_arg — ввод пользователя
+#### СЕЛЕКТОРЫ (Ref, Trim Primers, Remove Host Read, Nextclade)
 
-indexed_f_table AT [type_interface = user_arg] —> parameter: parameter_arg
+	table —> filtered_table —> index by type_interface (indexed_f_table)
+	indexed_f_table AT [type_interface = user_arg] —> parameter: parameter_arg
+_user_arg — ввод пользователя_
+> селекторы уникальны по типам, поэтому это работает
 
-селекторы уникальны по типам, поэтому это работает
-
-если селектора не представлено, то почти всегда это требует бинарного аргумента в другом параметре интерфейса, поэтому в отсутствие селектора/выбора из селектора
+! если селектора не представлено, то почти всегда это требует бинарного аргумента в другом параметре интерфейса, поэтому в отсутствие селектора/выбора из селектора
 
 interface_condition = False
 
 БИНАРНЫЕ ПАРАМЕТРЫ
 
-filtered_table —> filter only binary with isinstance(interface_condition, bool) —> index by interface_condition —> select AT [interface_condition = user_arg] —> parameter: parameter_arg
+	filtered_table —> filter only binary with isinstance(interface_condition, bool) —> index by interface_condition —> select AT [interface_condition = user_arg] —> parameter: parameter_arg
+- тут нужно указать False (interface_condition) для всех «забанненых» параметров
 
-!у аргумента Virus Prediction странные параметры, поэтому для него нужно сделать исключение и отфильтровать исходя из зависимостей
-Также тут нужно указать False (interface_condition) для всех «забанненых» параметров
+- у аргумента Virus Prediction странные параметры, поэтому для него нужно сделать исключение и отфильтровать исходя из зависимостей
 
-ВЫБОР ВИРУСА
+#### ВЫБОР ВИРУСА
 
 можно аргументы парсинга назвать fasta и gff и просто написать
+> value — выбранный файл
 
-user_arg: value
+	user_arg: value
 
-value — выбранный файл
 
-КОЛИЧЕСТВЕННЫЕ ПАРАМЕТРЫ (либо по остаточному принципу)
+#### КОЛИЧЕСТВЕННЫЕ ПАРАМЕТРЫ (либо по остаточному принципу)
 
 почти как селекторы, только вместо type interface берётся interface_parameter
+> полученные ключ-значение parameter: parameter_arg сохраняются в yml-формате
 
-filtered_table —> index by interface_parameter (indexed_f_table) 
+	1. filtered_table —> index by interface_parameter (indexed_f_table) 
 
-indexed_f_table AT [interface_parameter = user_arg] —> parameter: user_value
+	2. indexed_f_table AT [interface_parameter = user_arg] —> parameter: user_value
 
-полученные ключ-значение parameter: parameter_arg сохраняются в yml-формате
 
-пример:
+##### пример:
 
+```
 gff: /mnt/dbs_nextflow/references/viruses/orthomyxoviridae/influenza_a/h3n2_2024/GCA_040230115.1_ASM4023011v1_genomic.240611.gff.gz
 fasta: /mnt/dbs_nextflow/references/viruses/orthomyxoviridae/influenza_a/h3n2_2024/GCA_040230115.1_ASM4023011v1_genomic.240611.fna.gz
 bowtie2_index: /mnt/dbs_nextflow/references/viruses/orthomyxoviridae/influenza_a/h3n2_2024/GCA_040230115.1_ASM4023011v1_genomic.240611.fna.index.gz
@@ -191,29 +199,28 @@ save_unaligned: false
 skip_multiqc: true
 skip_variants_long_table: true
 skip_pangolin: true
+```
+
+### КАК ГЕНЕРИРУЕТСЯ КОНФИГ
+
+- есть заготовки, которые сгенерированы скриптом create_config.py
+
+- в эти заготовки подставляется соответствующий menu_id из таблицы параметр со значением
+
+#### БИНАРНЫЕ
+
+	1. table —> table_filtered by interface_parameter —> table_f_indexed by interface_parameter
+
+	2. table_f_indexed AT [interface_parameter = user_arg] —> parameter: id_menu
+- тут берётся именно parameter, а не parameter_arg, потому что это флаг bash-команды
+
+- parameter форматируется в --parameter
+
+#### КОЛИЧЕСТЕННЫЕ (сейчас это все остальные)
+
+	1. filtered_table —> index by interface_parameter (indexed_f_table) 
+
+	2. indexed_f_table AT [interface_parameter = user_arg] —> id_menu: user_value
 
 
-КАК ГЕНЕРИРУЕТСЯ КОНФИГ
-
-есть заготовки, которые сгенерированы скриптом create_config.py
-
-в эти заготовки подставляется соответствующий menu_id из таблицы параметр со значением
-
-БИНАРНЫЕ
-
-table —> table_filtered by interface_parameter —> table_f_indexed by interface_parameter
-
-table_f_indexed AT [interface_parameter = user_arg] —> parameter: id_menu
-
-тут берётся именно parameter, а не parameter_arg, потому что это флаг bash-команды
-
-parameter форматируется в --parameter
-
-КОЛИЧЕСТЕННЫЕ (сейчас это все остальные)
-
-filtered_table —> index by interface_parameter (indexed_f_table) 
-
-indexed_f_table AT [interface_parameter = user_arg] —> id_menu: user_value
-
-
-с помощью string template в заготовку подставляются полученные аргументы конфига по ключу id_menu
+- с помощью string template в заготовку подставляются полученные аргументы конфига по ключу id_menu
